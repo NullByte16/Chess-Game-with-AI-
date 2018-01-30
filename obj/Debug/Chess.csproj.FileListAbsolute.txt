@@ -1,0 +1,10 @@
+C:\Users\Ezra Gubbay\AppData\Local\Temporary Projects\Chess\bin\Debug\Chess.exe.config
+C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\bin\Debug\Chess.exe.config
+C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\obj\Debug\Chess.csprojResolveAssemblyReference.cache
+C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\obj\Debug\Chess.Properties.Resources.resources
+C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\obj\Debug\Chess.csproj.GenerateResource.Cache
+C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\bin\Debug\Chess.exe
+C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\bin\Debug\Chess.pdb
+C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\obj\Debug\Chess.exe
+C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\obj\Debug\Chess.pdb
+C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\obj\Debug\Chess.MainForm.resources
