@@ -47,6 +47,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AI.cs" />
+    <Compile Include="ChooseDubbedPiece.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ChooseDubbedPiece.Designer.cs">
+      <DependentUpon>ChooseDubbedPiece.cs</DependentUpon>
+    </Compile>
     <Compile Include="HelpGraphicCell.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -65,6 +71,9 @@
     <Compile Include="Logic.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="ChooseDubbedPiece.resx">
+      <DependentUpon>ChooseDubbedPiece.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>

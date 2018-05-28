@@ -18,11 +18,17 @@ namespace Chess
         private EatenPieceHolder[,] EatenWhite = new EatenPieceHolder[4, 4];
         private EatenPieceHolder nextBlack;
         private EatenPieceHolder nextWhite;
+        private Image KingW = Properties.Resources.KingW, KingB = Properties.Resources.KingB;
         private Logic logic;
+        private AI ai = null; // null indicates its a human playing
 
         public MainForm()
         {
             InitializeComponent();
+        }
+
+        private void init()
+        {
             logic = new Chess.Logic();
             InitGrid();
             InitEaten();
@@ -79,9 +85,9 @@ namespace Chess
 
         public void InitEaten()
         {
-            for(int i = 0; i < 4; i++)
+            for (int i = 0; i < 4; i++)
             {
-                for(int j = 0; j < 4; j++)
+                for (int j = 0; j < 4; j++)
                 {
                     EatenWhite[i, j] = new EatenPieceHolder(i, j, this, null, Color.White);
                     EatenBlack[i, j] = new EatenPieceHolder(i, j, this, null, Color.Black);
@@ -96,14 +102,14 @@ namespace Chess
         {
             // todo names that mean something
             if (lastChosen != null || logic.IsThisColorToPlay(i, j))
-                Cellclicked(i, j);
+                CellClicked(i, j);
         }
 
         private LinkedList<Cell> ValidMoves = null;
         private GraphicCell lastChosen = null;
-        public void Cellclicked(int i, int j)
+        public void CellClicked(int i, int j) // todo there's a bug - after choosing a target once, then choosing another target, it won't show valid moves
         {
-            if(lastChosen == null) // choosing source
+            if (lastChosen == null) // choosing source
             {
                 ValidMoves = logic.GetValidMoves(i, j);
                 // would return null if no piece 
@@ -111,11 +117,14 @@ namespace Chess
                 {
                     foreach (Cell cell in ValidMoves)
                     {
-                        grid[cell.I, cell.J].BackColor = System.Drawing.Color.GreenYellow;
+                        if (cell.piece == null)
+                            grid[cell.I, cell.J].BackColor = System.Drawing.Color.GreenYellow;
+                        else
+                            grid[cell.I, cell.J].BackColor = System.Drawing.Color.Red;
                     }
-                }
 
-                lastChosen = grid[i, j];
+                    lastChosen = grid[i, j];
+                }
             }
 
             else // choosing target
@@ -127,7 +136,11 @@ namespace Chess
 
                 //var cell = this.logic.GetCell(i, j);
                 if (!ValidMoves.Contains(this.logic.GetCell(i, j)))
-                    return; // return if target is not possible to get to
+                {
+                    lastChosen = null;
+                    return;
+                }
+                // return if target is not possible to get to
 
                 if (logic.getCellContent(i, j) != null && !logic.IsThisColorToPlay(i, j)) // target is about get eaten!
                 {
@@ -147,18 +160,67 @@ namespace Chess
                     }
                 }
 
-                Image temp = lastChosen.Image;
-                lastChosen.Image = null;
-                grid[i, j].Image = temp;
+                graphicallyMovePiece(lastChosen, grid[i, j]); //BREAKPOINT
 
-                if (logic.MakeMove(i, j, lastChosen.I, lastChosen.J)) // means if checkmate
+                if (logic.MakeMove(i, j, lastChosen.I, lastChosen.J)) // means if checkmate 
                 {
-                    this.InitGrid();
+                    this.InitGrid(); // todo if checkmate, leave the board!
                     this.InitEaten();
                 }
 
                 lastChosen = null;
+
+                // todo
+                // if move was successfully done, and not checkmate... blah blah if's
+                if (ai != null)
+                    letAIplay();
             }
+        }
+
+        private void graphicallyMovePiece(GraphicCell source, GraphicCell target)
+        {
+            Image temp = source.Image;
+            source.Image = null;
+            grid[target.I, target.J].Image = temp;
+
+            Image checkImage = grid[target.I, target.J].Image;
+            if ((target.Image.Equals(this.KingW) || target.Image.Equals(this.KingB) && Math.Abs(target.J - source.J) == 2))
+            {
+                if (target.J > 4)
+                {
+
+                    temp = grid[target.I, 7].Image;
+                    grid[target.I, 7].Image = null;
+
+                    grid[target.I, 4].Image = temp;
+                }
+
+                if (target.J < 4)
+                {
+
+                    temp = grid[target.I, 0].Image;
+                    grid[target.I, 0].Image = null;
+
+                    grid[target.I, 2].Image = temp;
+                }
+            }
+        }
+
+        const int AI_DELAY_SECONDS = 2;
+        private void letAIplay()
+        {
+            this.Update();
+            long start = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+
+            Move move = ai.ChooseMove();
+            logic.MakeMove(move.to.I, move.to.J, move.from.I, move.from.J);
+
+            graphicallyMovePiece(grid[move.from.I, move.from.J], grid[move.to.I, move.to.J]);
+
+            long end = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            int sleep_time = 1000 * AI_DELAY_SECONDS - (int)(end - start);
+            if (sleep_time > 0)
+                System.Threading.Thread.Sleep(sleep_time);
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -167,9 +229,9 @@ namespace Chess
             HelpGrid = new HelpGraphicCell[8, 8];
             Cell[,] grid = logic.HelpForm();
 
-            for(int i = 0; i < 8; i++)
+            for (int i = 0; i < 8; i++)
             {
-                for(int j = 0; j < 8; j++)
+                for (int j = 0; j < 8; j++)
                 {
                     HelpGrid[i, j] = new HelpGraphicCell(i, j, this, null);
 
@@ -231,6 +293,31 @@ namespace Chess
         private void button4_Click(object sender, EventArgs e)
         {
             RessurectGrid();
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            panel1.Visible = false;
+            init();
+            ai = new AI(Color.Black, logic);
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            panel1.Visible = false;
+            init();
+            ai = null;
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            var form = new ChooseDubbedPiece();
+            form.Location = this.Location;
+            form.ShowDialog();
+            // code will freeze here until that form is closed
+
+            string chosen = form.chosen;
+            MessageBox.Show("you chose " + chosen);
         }
     }
 }

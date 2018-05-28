@@ -8,3 +8,4 @@ C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\bin\Debug
 C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\obj\Debug\Chess.exe
 C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\obj\Debug\Chess.pdb
 C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\obj\Debug\Chess.MainForm.resources
+C:\Users\Ezra Gubbay\Documents\Visual Studio 2015\Projects\Chess\Chess\obj\Debug\Chess.ChooseDubbedPiece.resources

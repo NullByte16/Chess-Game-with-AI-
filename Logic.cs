@@ -10,10 +10,24 @@ namespace Chess
     {
         public Cell[,] grid = new Cell[8, 8]; // todo private
         private Color CurrentTurn = Color.White;
+        private bool[] castlingHasMoved = new bool[6];
+        private Cell[] castlingPieces = new Cell[6];
 
         public Logic()
         {
             // todo init all cells. some of the cell shall include a piece
+            for(int i = 0; i < this.castlingHasMoved.Length; i++)
+            {
+                castlingHasMoved[i] = false;
+            }
+
+            castlingPieces[0] = grid[7, 3];
+            castlingPieces[1] = grid[0, 3];
+            castlingPieces[2] = grid[7, 0];
+            castlingPieces[3] = grid[7, 7];
+            castlingPieces[4] = grid[0, 0];
+            castlingPieces[5] = grid[0, 7];
+
             InitGrid();
         }
 
@@ -97,7 +111,26 @@ namespace Chess
         {
             // Also switch turns if success      
             if (grid[fromI, fromJ].piece == null)
-                throw new Exception("attempt to move a null piece");      
+                throw new Exception("attempt to move a null piece");
+
+            if (grid[fromI, fromJ].piece.GetType() == Type.King && Math.Abs(toJ - fromJ) == 2)
+            {
+                if(toI > 4)
+                {
+                    if (toJ < fromJ)
+                        MakeMove(7, 2, 7, 0);
+                    else
+                        MakeMove(7, 4, 7, 7);
+                }
+                else
+                {
+                    if (toJ < fromJ)
+                        MakeMove(0, 2, 0, 0);
+                    else
+                        MakeMove(0, 4, 0, 7);
+                }
+            }
+
             grid[toI, toJ].piece = grid[fromI, fromJ].piece;
             grid[fromI, fromJ].piece = null;
 
@@ -105,9 +138,8 @@ namespace Chess
             if (InCheck(GetTurn())) {
                 if (InCheckMate(GetTurn())) {
                     NextTurn();
-                    //System.Windows.Forms.MessageBox.Show("Checkmate!!! " + GetTurn() + " is the winner!");
+                    System.Windows.Forms.MessageBox.Show("Checkmate!!! " + GetTurn() + " is the winner!");
                     InitGrid();
-                    System.Windows.Forms.MessageBox.Show("Logic grid initialized. MainForm is an idiot.");
                     return true;
                 }
             }
@@ -123,6 +155,42 @@ namespace Chess
         public LinkedList<Cell> GetValidMoves(Cell cell)
         {
             return GetValidMoves(cell.I, cell.J);
+        }
+
+        public override string ToString()
+        {
+            String st = "";
+            for (int i = 0; i < 8; i++)
+            {
+                for(int j = 0; j < 8; j++)
+                {
+                    string piece = "X";
+                    if (grid[i, j].piece == null)
+                        piece = " ";
+                    else if (grid[i, j].piece.GetType() == Type.Bishop)
+                        piece = "b";
+
+                    else if (grid[i, j].piece.GetType() == Type.King)
+                        piece = "k";
+                    else if (grid[i, j].piece.GetType() == Type.Knight)
+                        piece = "n";
+                    else if (grid[i, j].piece.GetType() == Type.Pawn)
+                        piece = "p";
+                    else if (grid[i, j].piece.GetType() == Type.Queen)
+                        piece = "q";
+                    else if (grid[i, j].piece.GetType() == Type.Rook)
+                        piece = "r";
+
+                    if(grid[i, j].piece != null)
+                    {
+                        if (grid[i, j].piece.GetColor() == Color.Black)
+                            piece = piece.ToUpper();
+                    }
+                    st += piece;
+                }
+                st += "\n";
+            }
+            return st;
         }
 
         /// <summary>
@@ -192,6 +260,7 @@ namespace Chess
             return result;
         }
 
+        #region MoveCheckers
         //Checkers. Different assisstive methods for determining valid moves for each piece type.
 
         /// <summary>
@@ -478,29 +547,58 @@ namespace Chess
         /// </summary>
         public void CheckMovesKing(Cell cell, LinkedList<Cell> result)
         {
+            LinkedList<Cell> remover = new LinkedList<Cell>();
 
+            //Add spaces king can move to, do not include pieces of the same color.
             for (int i = cell.I - 1; i <= cell.I + 1; i++)
             {
-                if (validIndexes(i, cell.J - 1))
+                if (validIndexes(i, cell.J - 1) && ((grid[i, cell.J - 1].piece != null && grid[i, cell.J - 1].piece.GetColor() != GetTurn()) || grid[i, cell.J - 1].piece == null))
                     result.AddLast(grid[i, cell.J - 1]);
 
-                if (validIndexes(i, cell.J))
+                if (validIndexes(i, cell.J) && ((grid[i, cell.J].piece != null && grid[i, cell.J].piece.GetColor() != GetTurn()) || grid[i, cell.J].piece == null))
                     result.AddLast(grid[i, cell.J]);
 
-                if (validIndexes(i, cell.J + 1))
+                if (validIndexes(i, cell.J + 1) && ((grid[i, cell.J + 1].piece != null && grid[i, cell.J + 1].piece.GetColor() != GetTurn()) || grid[i, cell.J + 1].piece == null))
                     result.AddLast(grid[i, cell.J + 1]);
 
             }
-            
-            foreach(Cell remove in result)
+
+            result.Remove(cell);
+
+
+            //castling.
+            if (cell.piece.GetColor() == Color.White && !castlingHasMoved[0])
             {
-                if(remove.piece != null && remove.piece.GetType() == Type.King)
-                {
-                    result.Remove(remove);
-                    break;
-                }
+                bool clear = true;
+
+                if (grid[7, 1].piece != null || grid[7, 2].piece != null)
+                    clear = false;
+
+                if (!castlingHasMoved[2] && clear) result.AddLast(grid[7, cell.J - 2]);
+
+                clear = true;
+                if (grid[7, 4].piece != null || grid[7, 5].piece != null || grid[7, 6].piece != null)
+                    clear = false;
+
+                if (!castlingHasMoved[3] && clear) result.AddLast(grid[7, cell.J + 2]);
+            }
+
+            if (cell.piece.GetColor() == Color.Black && !castlingHasMoved[1])
+            {
+                bool clear = true;
+                if (grid[0, 1].piece != null || grid[0, 2].piece != null)
+                    clear = false;
+
+                if (!castlingHasMoved[2] && clear) result.AddLast(grid[0, cell.J - 2]);
+
+                clear = true;
+                if (grid[0, 4].piece != null || grid[0, 5].piece != null || grid[0, 6].piece != null)
+                    clear = false;
+
+                if (!castlingHasMoved[3] && clear) result.AddLast(grid[0, cell.J + 2]);
             }
         }
+        
 
         /// <summary>
         /// Receives the index [i, j]. Returns true if they exist in grid, else returns false.
@@ -521,7 +619,10 @@ namespace Chess
 
             LinkedList<Cell> moves = new LinkedList<Cell>();
             // does any of the opponent pices'  GetValidMoves contain the our king\s cell.
-            foreach(Cell checker in grid)
+
+            //System.Windows.Forms.MessageBox.Show(king.piece + " " + king.I + " " + king.J);
+
+            foreach (Cell checker in grid)
             {
                 if(checker.piece != null && checker.piece.GetColor() != king.piece.GetColor())
                 {
@@ -562,13 +663,14 @@ namespace Chess
         /// <summary>
         /// Returns a cell with one of the Kings, White if Color is White, and Black if Color is Black.
         /// </summary>
-        private Cell FindKing(Color Color)
+        public Cell FindKing(Color Color)
         {
             foreach(Cell cell in grid)
             {
                 if (cell.piece != null && cell.piece.GetType() == Type.King && cell.piece.GetColor() == Color)
                     return cell;
             }
+
             return null;
         }
 
@@ -584,7 +686,8 @@ namespace Chess
             //     move the king,
             //     check if check
             //     get the king back
-            if (GetValidMoves(FindKing(color)).First() == null)
+            LinkedList<Cell> ValidMovesKing = GetValidMoves(FindKing(color));
+            if (ValidMovesKing != null)
             {
                 foreach (Cell cell in grid)
                 {
@@ -668,3 +771,4 @@ namespace Chess
         Knight,
         Pawn
     }
+#endregion
