@@ -15,7 +15,7 @@ namespace Chess
         {
             var root = buildTree(2, game.GetTurn(), this.CloneGame(game));
 
-            Console.WriteLine(game);
+            Console.WriteLine(game); //ERASE
             // now we have to find the son with max score
             // we can use the fact the root's score == max score of its sons
             // so we will iterate over sons to find a son with score eq to ours
@@ -23,11 +23,19 @@ namespace Chess
             {
                 if (son.score == root.score)
                 {
+                    game.NextTurn(); //DEBUGGG
                     return son.whatGotUsHere;
                 }
             }
 
-            throw new Exception("ai did not find any move to play. at all");
+            Color OpponentColor = Color == Color.White ? Color.Black : Color.White;
+            if (game.InCheckMate(OpponentColor))
+                System.Windows.Forms.MessageBox.Show("Checkmate!!! " + Color + " is the winner!");
+            else
+                System.Windows.Forms.MessageBox.Show("Checkmate!!! " + OpponentColor + " is the winner!");
+
+            return null;
+            throw new Exception("ai did not find any move to play. at all"); //Unreachable Code?
         }
 
         public AI(Color color, Logic game)
@@ -36,6 +44,13 @@ namespace Chess
             this.game = game;
         }
 
+        private Piece eaten;
+        private Cell whatIMoved;
+
+        /// <summary>
+        /// Assess the current state of the game, in favor of a certain color (whoIsToPlay).
+        /// Returns an integer between -100 and 100, ranking how good the state of the game is for specified color.
+        /// </summary>
         private int assess(Logic game, Color whoIsToPlay) // pretty much heuristic
         {
             // todo return a number from -inf(we lose) to inf(we win)
@@ -43,8 +58,8 @@ namespace Chess
             // are we (or they) close to the centre
             // are any piece lost
             // is the king vulnerable
-            int centerControl, piecesLost, kingVulnerability;
-            const int a = 15, b = 8, c = 8;
+            int centerControl, piecesLost, kingVulnerability, pieceEaten;
+            const int a = 20, b = 12, c = 12, d = 20;
             //First we'll check whoIsToPlay's control over the center.
             //1: How many pieces from each side physically occupy the center?
             int countWhite = occupyCenter(game, Color.White);
@@ -79,7 +94,8 @@ namespace Chess
 
             piecesLost = whoIsToPlay == Color.White ? b * (countWhite - countBlack) : b * (countBlack - countWhite);
 
-            //Finally, we will assess the our king's vulnerability.
+
+            //Now, we will assess both kings' vulnerability.
             //Can we be checkmated next turn?
             int MyVul = 0, OpponentVul = 0;
             for (int i = 0; i < 8; i++)
@@ -109,7 +125,31 @@ namespace Chess
 
             kingVulnerability = OpponentVul - MyVul;
 
-            return a * centerControl + b * piecesLost + c * kingVulnerability;
+            //Finally, we will assess the pieces we can eat, and our pieces, which can be eaten.
+            int eatenValue, whatAteMeValue, threatValue;
+
+            if (eaten != null)
+            {
+                eatenValue = PieceValue(eaten.GetType());
+                whatAteMeValue = PieceValue(whatIMoved.piece.GetType());
+                threatValue = ThreatValue();
+
+                pieceEaten = eatenValue - whatAteMeValue - threatValue; //If value of eaten piece is more than what ate him,
+                                                                        //that is good for current player. If threat on current
+                                                                        //player's piece is positive, it is bad because the player is
+                                                                        //threatened by lesser piece.
+            }
+
+            else
+            {
+                whatAteMeValue = PieceValue(whatIMoved.piece.GetType());
+                threatValue = ThreatValue();
+
+                pieceEaten = whatAteMeValue - threatValue;
+            }
+
+
+            return a * centerControl + b * piecesLost + c * kingVulnerability + d * pieceEaten;
         }
 
         //Receives a game and a color. Returns how many pieces of that color physically occupy the center.
@@ -167,9 +207,53 @@ namespace Chess
             return false;
         }
 
+        public int PieceValue(Type type)
+        {
+            int queen = 9, rook = 5, knight = 3, bishop = 3, pawn = 1;
+
+            switch (type)
+            {
+                case Type.Queen:
+                    return queen;
+
+                case Type.Rook:
+                    return rook;
+
+                case Type.Knight:
+                    return knight;
+
+                case Type.Bishop:
+                    return bishop;
+
+                case Type.Pawn:
+                    return pawn;
+            }
+
+            return 0; //Code should never reach here.
+        }
+
+        public int ThreatValue()
+        {
+            int maxThreat = -9;
+            for (int i = 0; i < 8; i++)
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    if (game.grid[i, j].piece != null && game.GetValidMoves(game.grid[i, j]).Contains(whatIMoved) && PieceValue(game.grid[i, j].piece.GetType()) - PieceValue(whatIMoved.piece.GetType()) > maxThreat)
+                        maxThreat = PieceValue(game.grid[i, j].piece.GetType()) - PieceValue(whatIMoved.piece.GetType());
+
+
+                }
+            }
+
+            return maxThreat;
+        }
+
+
         int idFactory = 0;
 
         TreeNode buildTree(int levelsLeftToBuild, Color WhoIsToPlay, Logic state) // the function's final result would be the tree's root
+
         {
             TreeNode resultNode = new TreeNode();
 
@@ -191,8 +275,8 @@ namespace Chess
                     {
                         if (state.grid[i, j].piece != null && state.grid[i, j].piece.GetColor() == WhoIsToPlay)
                         {
-                           // Console.WriteLine(idFactory + " before recur:");
-                           // Console.WriteLine(state);
+                            // Console.WriteLine(idFactory + " before recur:");
+                            // Console.WriteLine(state);
 
                             LinkedList<Cell> ValidMoves = state.GetValidMoves(state.grid[i, j]);
 
@@ -205,6 +289,13 @@ namespace Chess
                                 occupied_piece = target_cell.piece;
                                 target_cell.piece = movingPiece;
 
+                                if (occupied_piece != null)
+                                    eaten = occupied_piece;
+
+                                else
+                                    eaten = null;
+
+                                whatIMoved = target_cell;
 
                                 var son = buildTree(levelsLeftToBuild - 1, WhoIsToPlay == Color.Black ? Color.White : Color.Black, state);
                                 son.whatGotUsHere = new Move(state.grid[i, j], target_cell);
@@ -214,8 +305,8 @@ namespace Chess
                             }
                             state.grid[i, j].piece = movingPiece;
 
-                           // Console.WriteLine(idFactory + " after recur:");
-                           // Console.WriteLine(state);
+                            // Console.WriteLine(idFactory + " after recur:");
+                            // Console.WriteLine(state);
 
                             idFactory++;
                         }

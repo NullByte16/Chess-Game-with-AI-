@@ -23,7 +23,7 @@ namespace Chess
             this.UseVisualStyleBackColor = true;
             this.Icon = Icon;
 
-            this.OriginalColor = i % 2 == j % 2 ? System.Drawing.Color.Gray : System.Drawing.Color.WhiteSmoke;
+            this.OriginalColor = i % 2 == j % 2 ? System.Drawing.Color.WhiteSmoke : System.Drawing.Color.Gray;
 
             papaForm.Controls.Add(this);
             this.Click += new System.EventHandler(this.OnClick);

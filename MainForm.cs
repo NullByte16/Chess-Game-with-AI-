@@ -71,7 +71,7 @@ namespace Chess
             }
         }
 
-        private void RessurectGrid()
+        private void RessurrectGrid()
         {
             for (int i = 0; i < 8; i++)
                 for (int j = 0; j < 8; j++)
@@ -117,8 +117,12 @@ namespace Chess
                 {
                     foreach (Cell cell in ValidMoves)
                     {
-                        if (cell.piece == null)
+                        if (cell.piece == null && logic.grid[i, j].piece.GetType() == Type.King && Math.Abs(j - cell.J) == 2)
+                            grid[cell.I, cell.J].BackColor = System.Drawing.Color.Aqua;
+
+                        else if (cell.piece == null)
                             grid[cell.I, cell.J].BackColor = System.Drawing.Color.GreenYellow;
+
                         else
                             grid[cell.I, cell.J].BackColor = System.Drawing.Color.Red;
                     }
@@ -179,12 +183,24 @@ namespace Chess
 
         private void graphicallyMovePiece(GraphicCell source, GraphicCell target)
         {
+            int i, j;
+
             Image temp = source.Image;
             source.Image = null;
-            grid[target.I, target.J].Image = temp;
+            target.Image = temp;
 
-            Image checkImage = grid[target.I, target.J].Image;
-            if ((target.Image.Equals(this.KingW) || target.Image.Equals(this.KingB) && Math.Abs(target.J - source.J) == 2))
+            if (logic.grid[source.I, source.J].piece != null)
+            {
+                i = source.I;
+                j = source.J;
+            }
+
+            else
+            {
+                i = target.I;
+                j = target.J;
+            }
+            if (logic.getCellContent(i, j).GetType() == Type.King && Math.Abs(target.J - source.J) == 2)
             {
                 if (target.J > 4)
                 {
@@ -204,6 +220,78 @@ namespace Chess
                     grid[target.I, 2].Image = temp;
                 }
             }
+
+            if (logic.getCellContent(i, j).GetType() == Type.Pawn && (target.I == 0 || target.I == 7))
+            {
+                string promotion = Promote(target.I);
+                switch (promotion)
+                {
+                    case "Knight":
+                        logic.Promotion(source.I, source.J, Type.Knight);
+
+                        if (target.I == 0)
+                            grid[target.I, target.J].Image = Properties.Resources.KnightW;
+
+                        else
+                            grid[target.I, target.J].Image = Properties.Resources.KnightB;
+                        break;
+
+                    case "Rook":
+                        logic.Promotion(source.I, source.J, Type.Rook);
+
+                        if (target.I == 0)
+                            grid[target.I, target.J].Image = Properties.Resources.RookW;
+
+                        else
+                            grid[target.I, target.J].Image = Properties.Resources.RookB;
+                        break;
+
+                    case "Bishop":
+                        logic.Promotion(source.I, source.J, Type.Bishop);
+
+                        if (target.I == 0)
+                            grid[target.I, target.J].Image = Properties.Resources.BishopW;
+
+                        else
+                            grid[target.I, target.J].Image = Properties.Resources.BishopB;
+                        break;
+
+                    case "Queen":
+                        logic.Promotion(source.I, source.J, Type.Queen);
+
+                        if (target.I == 0)
+                            grid[target.I, target.J].Image = Properties.Resources.QueenW;
+
+                        else
+                            grid[target.I, target.J].Image = Properties.Resources.QueenB;
+                        break;
+                }
+            }
+        }
+
+        private string Promote(int i)
+        {
+            var form1 = new ChooseDubbedPieceWhite();
+            var form2 = new ChooseDubbedPieceBlack();
+            string chosen;
+
+            if (i == 0)
+            {
+                form1.Location = this.Location;
+                form1.ShowDialog();
+                chosen = form1.chosen;
+            }
+
+            else
+            {
+                form2.Location = this.Location;
+                form2.ShowDialog();
+                chosen = form2.chosen;
+            }
+            // code will freeze here until that form is closed
+
+            MessageBox.Show("you chose " + chosen);
+            return chosen;
         }
 
         const int AI_DELAY_SECONDS = 2;
@@ -213,14 +301,25 @@ namespace Chess
             long start = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
             Move move = ai.ChooseMove();
-            logic.MakeMove(move.to.I, move.to.J, move.from.I, move.from.J);
+            if (move != null)
+            {
+                logic.MakeMove(move.to.I, move.to.J, move.from.I, move.from.J);
 
-            graphicallyMovePiece(grid[move.from.I, move.from.J], grid[move.to.I, move.to.J]);
+                graphicallyMovePiece(grid[move.from.I, move.from.J], grid[move.to.I, move.to.J]);
 
-            long end = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            int sleep_time = 1000 * AI_DELAY_SECONDS - (int)(end - start);
-            if (sleep_time > 0)
-                System.Threading.Thread.Sleep(sleep_time);
+                long end = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+                int sleep_time = 1000 * AI_DELAY_SECONDS - (int)(end - start);
+                if (sleep_time > 0)
+                    System.Threading.Thread.Sleep(sleep_time);
+            }
+
+            else
+                EndGame();
+        }
+
+        public void EndGame()
+        {
+
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -292,7 +391,7 @@ namespace Chess
 
         private void button4_Click(object sender, EventArgs e)
         {
-            RessurectGrid();
+            RessurrectGrid();
         }
 
         private void button5_Click(object sender, EventArgs e)
@@ -311,7 +410,7 @@ namespace Chess
 
         private void button7_Click(object sender, EventArgs e)
         {
-            var form = new ChooseDubbedPiece();
+            var form = new ChooseDubbedPieceWhite();
             form.Location = this.Location;
             form.ShowDialog();
             // code will freeze here until that form is closed

@@ -47,11 +47,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AI.cs" />
-    <Compile Include="ChooseDubbedPiece.cs">
+    <Compile Include="ChooseDubbedPieceWhite.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ChooseDubbedPiece.Designer.cs">
-      <DependentUpon>ChooseDubbedPiece.cs</DependentUpon>
+    <Compile Include="ChooseDubbedPieceWhite.Designer.cs">
+      <DependentUpon>ChooseDubbedPieceWhite.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ChooseDubbedPieceBlack.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ChooseDubbedPieceBlack.Designer.cs">
+      <DependentUpon>ChooseDubbedPieceBlack.cs</DependentUpon>
     </Compile>
     <Compile Include="HelpGraphicCell.cs">
       <SubType>Component</SubType>
@@ -71,8 +77,11 @@
     <Compile Include="Logic.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="ChooseDubbedPiece.resx">
-      <DependentUpon>ChooseDubbedPiece.cs</DependentUpon>
+    <EmbeddedResource Include="ChooseDubbedPieceBlack.resx">
+      <DependentUpon>ChooseDubbedPieceBlack.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ChooseDubbedPieceWhite.resx">
+      <DependentUpon>ChooseDubbedPieceWhite.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
