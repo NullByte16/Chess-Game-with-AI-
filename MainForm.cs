@@ -146,7 +146,7 @@ namespace Chess
                 }
                 // return if target is not possible to get to
 
-                if (logic.getCellContent(i, j) != null && !logic.IsThisColorToPlay(i, j)) // target is about get eaten!
+                /*if (logic.getCellContent(i, j) != null && !logic.IsThisColorToPlay(i, j)) // target is about get eaten!
                 {
                     if (logic.GetTurn() == Color.White)
                     {
@@ -162,7 +162,9 @@ namespace Chess
                             nextWhite = EatenWhite[nextWhite.I + 1, 0];
                         else nextWhite = EatenWhite[nextWhite.I, nextWhite.J + 1];
                     }
-                }
+                }*/
+
+                showEaten(i, j);
 
                 graphicallyMovePiece(lastChosen, grid[i, j]); //BREAKPOINT
 
@@ -177,7 +179,30 @@ namespace Chess
                 // todo
                 // if move was successfully done, and not checkmate... blah blah if's
                 if (ai != null)
+                {
                     letAIplay();
+                }
+            }
+        }
+
+        private void showEaten(int i, int j) //RECENT CODE
+        {
+            if (logic.getCellContent(i, j) != null && !logic.IsThisColorToPlay(i, j)) // target is about get eaten!
+            {
+                if (logic.GetTurn() == Color.White)
+                {
+                    nextBlack.PlaceEaten(grid[i, j].Image);
+                    if (nextBlack.J == 3) // todo its a magic number. at least explain
+                        nextBlack = EatenBlack[nextBlack.I + 1, 0];
+                    else nextBlack = EatenBlack[nextBlack.I, nextBlack.J + 1];
+                }
+                else
+                {
+                    nextWhite.PlaceEaten(grid[i, j].Image);
+                    if (nextWhite.J == 3)
+                        nextWhite = EatenWhite[nextWhite.I + 1, 0];
+                    else nextWhite = EatenWhite[nextWhite.I, nextWhite.J + 1];
+                }
             }
         }
 
@@ -202,22 +227,22 @@ namespace Chess
             }
             if (logic.getCellContent(i, j).GetType() == Type.King && Math.Abs(target.J - source.J) == 2)
             {
-                if (target.J > 4)
-                {
-
-                    temp = grid[target.I, 7].Image;
-                    grid[target.I, 7].Image = null;
-
-                    grid[target.I, 4].Image = temp;
-                }
-
                 if (target.J < 4)
                 {
 
                     temp = grid[target.I, 0].Image;
                     grid[target.I, 0].Image = null;
 
-                    grid[target.I, 2].Image = temp;
+                    grid[target.I, 3].Image = temp;
+                }
+
+                if (target.J > 4)
+                {
+
+                    temp = grid[target.I, 7].Image;
+                    grid[target.I, 7].Image = null;
+
+                    grid[target.I, 5].Image = temp;
                 }
             }
 
@@ -303,6 +328,7 @@ namespace Chess
             Move move = ai.ChooseMove();
             if (move != null)
             {
+                showEaten(move.to.I, move.to.J);
                 logic.MakeMove(move.to.I, move.to.J, move.from.I, move.from.J);
 
                 graphicallyMovePiece(grid[move.from.I, move.from.J], grid[move.to.I, move.to.J]);
