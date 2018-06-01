@@ -15,19 +15,29 @@ namespace Chess
         {
             var root = buildTree(2, game.GetTurn(), this.CloneGame(game));
 
-            Console.WriteLine(game); //ERASE
+            Console.WriteLine(root.score); //ERASE
+
             // now we have to find the son with max score
             // we can use the fact the root's score == max score of its sons
             // so we will iterate over sons to find a son with score eq to ours
+            List<TreeNode> BestSons = new List<TreeNode>();
             foreach (var son in root.sons)
             {
                 if (son.score == root.score)
                 {
+                    BestSons.Add(son);
+
+                    /*Console.WriteLine(son.score); //ERASE
                     game.NextTurn(); //DEBUGGG
-                    return son.whatGotUsHere;
+                    return son.whatGotUsHere;*/
                 }
             }
 
+            Random rnd = new Random();
+            int ChosenOne = rnd.Next(0, BestSons.Count);
+            return BestSons[ChosenOne].whatGotUsHere;
+
+            //All of this is pretty much unreachable code!!!!!!!!!!!!!!!!!!!!!!!!!!!
             Color OpponentColor = Color == Color.White ? Color.Black : Color.White;
             if (game.InCheckMate(OpponentColor))
                 System.Windows.Forms.MessageBox.Show("Checkmate!!! " + Color + " is the winner!");
@@ -51,7 +61,7 @@ namespace Chess
         /// Assess the current state of the game, in favor of a certain color (whoIsToPlay).
         /// Returns an integer between -100 and 100, ranking how good the state of the game is for specified color.
         /// </summary>
-        private int assess(Logic game, Color whoIsToPlay) // pretty much heuristic
+        private int assess(Logic game, Color Color) // pretty much heuristic
         {
             // todo return a number from -inf(we lose) to inf(we win)
             // optional aspects:
@@ -59,11 +69,11 @@ namespace Chess
             // are any piece lost
             // is the king vulnerable
             int centerControl, piecesLost, kingVulnerability, pieceEaten;
-            const int a = 20, b = 12, c = 12, d = 20;
+            const int a = 13, b = 8, c = 8, d = 13;
             //First we'll check whoIsToPlay's control over the center.
             //1: How many pieces from each side physically occupy the center?
             int countWhite = occupyCenter(game, Color.White);
-            int countBlack = occupyCenter(game, Color.White);
+            int countBlack = occupyCenter(game, Color.Black);
 
             //2: How many pieces 'threaten' how many squares in the center?
             threatenCenter(game, game.grid[3, 3], countWhite, countBlack);
@@ -71,8 +81,7 @@ namespace Chess
             threatenCenter(game, game.grid[4, 3], countWhite, countBlack);
             threatenCenter(game, game.grid[4, 4], countWhite, countBlack);
 
-            centerControl = whoIsToPlay == Color.White ? a * (countWhite - countBlack) : a * (countBlack - countWhite);
-
+            centerControl = this.Color == Color.White ? a * (countWhite - countBlack) : a * (countBlack - countWhite);
 
             //Next, we will compare our losses against the opponent's.
             countWhite = 0;
@@ -92,7 +101,7 @@ namespace Chess
                 }
             }
 
-            piecesLost = whoIsToPlay == Color.White ? b * (countWhite - countBlack) : b * (countBlack - countWhite);
+            piecesLost = this.Color == Color.White ? b * (countWhite - countBlack) : b * (countBlack - countWhite);
 
 
             //Now, we will assess both kings' vulnerability.
@@ -104,19 +113,19 @@ namespace Chess
                 {
                     if (game.grid[i, j].piece != null)
                     {
-                        if (game.grid[i, j].piece.GetColor() != whoIsToPlay)
+                        if (game.grid[i, j].piece.GetColor() != this.Color)
                         {
-                            if (DistanceFromKing(game, whoIsToPlay, game.grid[i, j]) < 4)
+                            if (DistanceFromKing(game, this.Color, game.grid[i, j]) < 4)
                                 MyVul += 2;
-                            if (DistanceFromKing(game, whoIsToPlay == Color.White ? Color.Black : Color.White, game.grid[i, j]) > 4)
+                            if (DistanceFromKing(game, this.Color == Color.White ? Color.Black : Color.White, game.grid[i, j]) > 4)
                                 OpponentVul++;
                         }
 
                         else
                         {
-                            if (DistanceFromKing(game, whoIsToPlay == Color.White ? Color.Black : Color.White, game.grid[i, j]) < 4)
+                            if (DistanceFromKing(game, this.Color == Color.White ? Color.Black : Color.White, game.grid[i, j]) < 4)
                                 OpponentVul += 2;
-                            if (DistanceFromKing(game, whoIsToPlay, game.grid[i, j]) > 4)
+                            if (DistanceFromKing(game, this.Color, game.grid[i, j]) > 4)
                                 MyVul++;
                         }
                     }
@@ -148,6 +157,7 @@ namespace Chess
                 pieceEaten = whatAteMeValue - threatValue;
             }
 
+            Console.WriteLine(whatIMoved.piece.GetColor() + "  " + whatIMoved.I + " " + whatIMoved.J + " " + centerControl + " " + piecesLost + " " + kingVulnerability + " " + pieceEaten + "\t sum: " + (a * centerControl + b * piecesLost + c * kingVulnerability + d * pieceEaten));
 
             return a * centerControl + b * piecesLost + c * kingVulnerability + d * pieceEaten;
         }
@@ -232,6 +242,11 @@ namespace Chess
             return 0; //Code should never reach here.
         }
 
+        /// <summary>
+        /// 
+        /// 
+        /// </summary>
+        /// <returns></returns>
         public int ThreatValue()
         {
             int maxThreat = -9;

@@ -246,6 +246,14 @@ namespace Chess
                 }
             }
 
+            if(logic.getCellContent(i, j).GetType() == Type.Pawn)
+            {
+                if (logic.WhitePerformingEnPassant(target.I, target.J, source.J))
+                    grid[i + 1, j].Image = null;
+                else if(logic.BlackPerformingEnPassant(target.I, target.J, source.J))
+                    grid[i - 1, j].Image = null;
+            }
+
             if (logic.getCellContent(i, j).GetType() == Type.Pawn && (target.I == 0 || target.I == 7))
             {
                 string promotion = Promote(target.I);

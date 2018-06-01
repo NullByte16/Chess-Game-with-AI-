@@ -16,12 +16,12 @@ namespace Chess
         public Logic()
         {
             // todo init all cells. some of the cell shall include a piece
-            for(int i = 0; i < this.castlingHasMoved.Length; i++)
+            for (int i = 0; i < this.castlingHasMoved.Length; i++)
             {
                 castlingHasMoved[i] = false;
             }
 
-            for(int i = 0; i < ep.Length; i++)
+            for (int i = 0; i < ep.Length; i++)
             {
                 ep[i] = new EnPassant();
             }
@@ -111,7 +111,7 @@ namespace Chess
             if (grid[fromI, fromJ].piece == null)
                 throw new Exception("attempt to move a null piece");
 
-            if(grid[fromI, fromJ].piece.GetType() == Type.King)
+            if (grid[fromI, fromJ].piece.GetType() == Type.King)
             {
                 if (grid[fromI, fromJ].piece.GetColor() == Color.White)
                     castlingHasMoved[0] = true;
@@ -119,7 +119,7 @@ namespace Chess
                     castlingHasMoved[1] = true;
             }
 
-            else if(grid[fromI, fromJ].piece.GetType() == Type.Rook)
+            else if (grid[fromI, fromJ].piece.GetType() == Type.Rook)
             {
                 if (grid[fromI, fromJ].piece.GetColor() == Color.White && castlingHasMoved[2])
                     castlingHasMoved[3] = true;
@@ -131,7 +131,7 @@ namespace Chess
                     castlingHasMoved[4] = true;
             }
 
-            for(int i = 0; i < ep.Length; i++)
+            for (int i = 0; i < ep.Length; i++)
             {
                 if (ep[i].GetIsActive()) //If the current EnPassant is active, deactivate it, and set cell to null.
                 {
@@ -143,25 +143,37 @@ namespace Chess
                     i = ep.Length; //If we find an EnPassant object that is inactive, we have reached the last active EnPassant.
             }
 
-            if(grid[fromI, fromJ].piece.GetType() == Type.Pawn && (toI == fromI + 2 || toI == fromI - 2))
+            if (grid[fromI, fromJ].piece.GetType() == Type.Pawn && (toI == fromI + 2 || toI == fromI - 2))
             {
                 int i = 0;
                 while (ep[i].GetIsActive()) i++;
-                ep[i].SetCell(grid[fromI, fromJ]);
+                ep[i].SetCell(grid[toI, toJ]);
                 ep[i].SetIsActive(true);
+            }
+
+            if(grid[fromI, fromJ].piece.GetType() == Type.Pawn)
+            {
+                if(WhitePerformingEnPassant(toI, toJ, fromJ))
+                    grid[toI + 1, toJ].piece = null;
+
+                if(BlackPerformingEnPassant(toI, toJ, fromJ))
+                    grid[toI - 1, toJ].piece = null;
             }
 
             if (grid[fromI, fromJ].piece.GetType() == Type.King && Math.Abs(toJ - fromJ) == 2)
             {
                 Castling(toI, toJ, fromI);
+                NextTurn();
             }
 
             grid[toI, toJ].piece = grid[fromI, fromJ].piece;
             grid[fromI, fromJ].piece = null;
 
             NextTurn();
-            if (InCheck(GetTurn())) {
-                if (InCheckMate(GetTurn())) {
+            if (InCheck(GetTurn()))
+            {
+                if (InCheckMate(GetTurn()))
+                {
                     NextTurn();
                     System.Windows.Forms.MessageBox.Show("Checkmate!!! " + GetTurn() + " is the winner!");
                     InitGrid();
@@ -205,6 +217,20 @@ namespace Chess
             }
         }
 
+        public bool WhitePerformingEnPassant(int toI, int toJ, int fromJ)
+        {
+            if ((toJ == fromJ - 1 || toJ == fromJ + 1) && grid[toI, toJ].piece == null)
+                return true;
+            return false;
+        }
+
+        public bool BlackPerformingEnPassant(int toI, int toJ, int fromJ)
+        {
+            if ((toJ == fromJ - 1 || toJ == fromJ + 1) && grid[toI, toJ].piece == null)
+                return true;
+            return false;
+        }
+
         public Cell GetCell(int i, int j)
         {
             return grid[i, j];
@@ -220,7 +246,7 @@ namespace Chess
             String st = "";
             for (int i = 0; i < 8; i++)
             {
-                for(int j = 0; j < 8; j++)
+                for (int j = 0; j < 8; j++)
                 {
                     string piece = "X";
                     if (grid[i, j].piece == null)
@@ -239,7 +265,7 @@ namespace Chess
                     else if (grid[i, j].piece.GetType() == Type.Rook)
                         piece = "r";
 
-                    if(grid[i, j].piece != null)
+                    if (grid[i, j].piece != null)
                     {
                         if (grid[i, j].piece.GetColor() == Color.Black)
                             piece = piece.ToUpper();
@@ -265,7 +291,7 @@ namespace Chess
 
             // if not check, dont inclucde moves that lead to check
             // todo
-            
+
             switch (cell.piece.GetType())
             {
                 case Type.Pawn:
@@ -297,11 +323,11 @@ namespace Chess
             Piece tempPiece = cell.piece;
             cell.piece = null;
             Piece occupied_piece = null;// To save any existing pieces in the current move of the current piece, from being deleted.
-            foreach(var target_cell in result)
+            foreach (var target_cell in result)
             {
                 occupied_piece = target_cell.piece;
                 target_cell.piece = tempPiece;
-                if(InCheck(target_cell.piece.GetColor()))
+                if (InCheck(target_cell.piece.GetColor()))
                 {
                     remover.AddLast(target_cell);
                 }
@@ -328,7 +354,7 @@ namespace Chess
         {
             if (cell.piece.GetColor() == Color.Black && cell.I + 1 < 8)
             {
-                if (cell.I == 1 && grid[cell.I + 2, cell.J].piece == null)
+                if (cell.I == 1 && grid[cell.I + 1, cell.J].piece == null && grid[cell.I + 2, cell.J].piece == null)
                     result.AddLast(grid[cell.I + 2, cell.J]);
 
                 if (grid[cell.I + 1, cell.J].piece == null)
@@ -352,13 +378,13 @@ namespace Chess
 
             else if (cell.I - 1 > -1)
             {
-                if (cell.I == 6 && grid[cell.I - 2, cell.J].piece == null)
+                if (cell.I == 6 && grid[cell.I - 1, cell.J].piece == null && grid[cell.I - 2, cell.J].piece == null)
                     result.AddLast(grid[cell.I - 2, cell.J]);
 
                 if (grid[cell.I - 1, cell.J].piece == null)
                     result.AddLast(grid[cell.I - 1, cell.J]);
 
-                if(cell.I == 3)//RECENT CODE
+                if (cell.I == 3)//RECENT CODE
                 {
                     if (validIndexes(cell.I, cell.J - 1) && EnPassantLeft(cell))
                         result.AddLast(grid[cell.I - 1, cell.J - 1]);
@@ -381,10 +407,18 @@ namespace Chess
             EnPassant epTemp = new EnPassant();
             epTemp.SetCell(grid[cell.I, cell.J - 1]);
             epTemp.SetIsActive(true);
-            if (grid[cell.I, cell.J - 1].piece != null && ep.Contains(epTemp))
-                return true;
+
+            if (grid[cell.I, cell.J - 1].piece != null)
+            {
+                for (int i = 0; i < ep.Length; i++)
+                {
+                    if (ep[i].GetCell() == epTemp.GetCell())
+                        return true;
+                }
+            }
+
             return false;
-                
+
         }
 
         public bool EnPassantRight(Cell cell)
@@ -392,8 +426,14 @@ namespace Chess
             EnPassant epTemp = new EnPassant();
             epTemp.SetCell(grid[cell.I, cell.J + 1]);
             epTemp.SetIsActive(true);
-            if (grid[cell.I, cell.J + 1].piece != null && !ep.Contains(epTemp))
-                return true;
+            if (grid[cell.I, cell.J + 1].piece != null)
+            {
+                for (int i = 0; i < ep.Length; i++)
+                {
+                    if (ep[i].GetCell() == epTemp.GetCell())
+                        return true;
+                }
+            }
             return false;
 
         }
@@ -429,12 +469,12 @@ namespace Chess
 
             //Refine result to only include cells that do not contain friendly pieces.
             LinkedList<Cell> remover = new LinkedList<Cell>();
-            foreach(Cell checker in result)
+            foreach (Cell checker in result)
             {
                 if (checker.piece != null && checker.piece.GetColor() == cell.piece.GetColor()) remover.AddLast(checker);
             }
 
-            foreach(Cell remove in remover)
+            foreach (Cell remove in remover)
                 result.Remove(remove);
         }
 
@@ -443,7 +483,7 @@ namespace Chess
         /// </summary>
         public void CheckMovesRook(Cell cell, LinkedList<Cell> result)
         {
-            for(int count = 0; count <= 7; count++)
+            for (int count = 0; count <= 7; count++)
             {
                 if (grid[count, cell.J] != cell)
                     result.AddLast(grid[count, cell.J]);
@@ -557,9 +597,9 @@ namespace Chess
             int i = cell.I - 1, j = cell.J - 1;
 
             //Check for available moves in all four diagonal directions from the Bishop.
-            while(i > -1 && j > -1)
+            while (i > -1 && j > -1)
             {
-                if(grid[i, j].piece != null)
+                if (grid[i, j].piece != null)
                 {
                     if (grid[i, j].piece.GetColor() == cell.piece.GetColor()) break;
                     else
@@ -690,17 +730,17 @@ namespace Chess
                 if (grid[0, 5].piece != null || grid[0, 6].piece != null)
                     clear = false;
 
-                if (!castlingHasMoved[2] && validIndexes(0, cell.J + 2) && clear) result.AddLast(grid[0, cell.J + 2]);
+                if (!castlingHasMoved[4] && validIndexes(0, cell.J + 2) && clear) result.AddLast(grid[0, cell.J + 2]);
 
                 clear = true;
 
                 if (grid[0, 3].piece != null || grid[0, 2].piece != null || grid[0, 1].piece != null)
                     clear = false;
 
-                if (!castlingHasMoved[3] && validIndexes(0, cell.J - 2) && clear) result.AddLast(grid[0, cell.J - 2]);
+                if (!castlingHasMoved[5] && validIndexes(0, cell.J - 2) && clear) result.AddLast(grid[0, cell.J - 2]);
             }
         }
-        
+
 
         /// <summary>
         /// Receives the index [i, j]. Returns true if they exist in grid, else returns false.
@@ -726,7 +766,7 @@ namespace Chess
 
             foreach (Cell checker in grid)
             {
-                if(checker.piece != null && checker.piece.GetColor() != king.piece.GetColor())
+                if (checker.piece != null && checker.piece.GetColor() != king.piece.GetColor())
                 {
                     switch (checker.piece.GetType())
                     {
@@ -767,7 +807,7 @@ namespace Chess
         /// </summary>
         public Cell FindKing(Color Color)
         {
-            foreach(Cell cell in grid)
+            foreach (Cell cell in grid)
             {
                 if (cell.piece != null && cell.piece.GetType() == Type.King && cell.piece.GetColor() == Color)
                     return cell;
@@ -894,19 +934,19 @@ namespace Chess
     }
 }
 
-    public enum Color
-    {
-        White,
-        Black
-    }
+public enum Color
+{
+    White,
+    Black
+}
 
-    public enum Type
-    {
-        King,
-        Queen,
-        Rook,
-        Bishop,
-        Knight,
-        Pawn
-    }
+public enum Type
+{
+    King,
+    Queen,
+    Rook,
+    Bishop,
+    Knight,
+    Pawn
+}
 #endregion
