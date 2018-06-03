@@ -13,7 +13,6 @@ namespace Chess
     public partial class MainForm : Form
     {
         private GraphicCell[,] grid = new GraphicCell[8, 8];  // corresponding to the original matrix. to show whats there
-        private HelpGraphicCell[,] HelpGrid = null;
         private EatenPieceHolder[,] EatenBlack = new EatenPieceHolder[4, 4];
         private EatenPieceHolder[,] EatenWhite = new EatenPieceHolder[4, 4];
         private EatenPieceHolder nextBlack;
@@ -25,6 +24,7 @@ namespace Chess
         public MainForm()
         {
             InitializeComponent();
+            buttonRestart.Visible = false;
         }
 
         private void init()
@@ -32,6 +32,7 @@ namespace Chess
             logic = new Chess.Logic();
             InitGrid();
             InitEaten();
+            buttonRestart.Visible = true;
         }
 
         private void InitGrid()
@@ -121,7 +122,7 @@ namespace Chess
                             grid[cell.I, cell.J].BackColor = System.Drawing.Color.Aqua;
 
                         else if (cell.piece == null)
-                            grid[cell.I, cell.J].BackColor = System.Drawing.Color.GreenYellow;
+                            grid[cell.I, cell.J].BackColor = System.Drawing.Color.SandyBrown;
 
                         else
                             grid[cell.I, cell.J].BackColor = System.Drawing.Color.Red;
@@ -138,31 +139,20 @@ namespace Chess
                     grid[cell.I, cell.J].BackColor = grid[cell.I, cell.J].OriginalColor;
                 }
 
-                //var cell = this.logic.GetCell(i, j);
                 if (!ValidMoves.Contains(this.logic.GetCell(i, j)))
                 {
+                    
+
+                    if (logic.getCellContent(i, j) != null && logic.getCellContent(i, j).GetColor() == logic.GetTurn())
+                    {
+                        lastChosen = null;
+                        CellClicked(i, j);
+                        return;
+                    }
+
                     lastChosen = null;
                     return;
                 }
-                // return if target is not possible to get to
-
-                /*if (logic.getCellContent(i, j) != null && !logic.IsThisColorToPlay(i, j)) // target is about get eaten!
-                {
-                    if (logic.GetTurn() == Color.White)
-                    {
-                        nextBlack.PlaceEaten(grid[i, j].Image);
-                        if (nextBlack.J == 3) // todo its a magic number. at least explain
-                            nextBlack = EatenBlack[nextBlack.I + 1, 0];
-                        else nextBlack = EatenBlack[nextBlack.I, nextBlack.J + 1];
-                    }
-                    else
-                    {
-                        nextWhite.PlaceEaten(grid[i, j].Image);
-                        if (nextWhite.J == 3)
-                            nextWhite = EatenWhite[nextWhite.I + 1, 0];
-                        else nextWhite = EatenWhite[nextWhite.I, nextWhite.J + 1];
-                    }
-                }*/
 
                 showEaten(i, j);
 
@@ -246,14 +236,16 @@ namespace Chess
                 }
             }
 
-            if(logic.getCellContent(i, j).GetType() == Type.Pawn)
+            //En Passant
+            if (logic.getCellContent(i, j).GetType() == Type.Pawn)
             {
                 if (logic.WhitePerformingEnPassant(target.I, target.J, source.J))
-                    grid[i + 1, j].Image = null;
-                else if(logic.BlackPerformingEnPassant(target.I, target.J, source.J))
-                    grid[i - 1, j].Image = null;
+                    grid[target.I + 1, target.J].Image = null;
+                else if (logic.BlackPerformingEnPassant(target.I, target.J, source.J))
+                    grid[target.I - 1, target.J].Image = null;
             }
 
+            //Promotion needed?
             if (logic.getCellContent(i, j).GetType() == Type.Pawn && (target.I == 0 || target.I == 7))
             {
                 string promotion = Promote(target.I);
@@ -356,71 +348,9 @@ namespace Chess
 
         }
 
-        private void button1_Click(object sender, EventArgs e)
-        {
-            HelpGrid = null;
-            HelpGrid = new HelpGraphicCell[8, 8];
-            Cell[,] grid = logic.HelpForm();
-
-            for (int i = 0; i < 8; i++)
-            {
-                for (int j = 0; j < 8; j++)
-                {
-                    HelpGrid[i, j] = new HelpGraphicCell(i, j, this, null);
-
-                    if (grid[i, j].piece != null && grid[i, j].piece.GetType() == Type.Pawn)
-                    {
-                        if (grid[i, j].piece.GetColor() == Color.Black) HelpGrid[i, j].Image = Properties.Resources.PawnB;
-                        else HelpGrid[i, j].Image = Properties.Resources.PawnW;
-                    }
-
-                    if (grid[i, j].piece != null && grid[i, j].piece.GetType() == Type.Knight)
-                    {
-                        if (grid[i, j].piece.GetColor() == Color.Black) HelpGrid[i, j].Image = Properties.Resources.KnightB;
-                        else HelpGrid[i, j].Image = Properties.Resources.KnightW;
-                    }
-
-                    if (grid[i, j].piece != null && grid[i, j].piece.GetType() == Type.Rook)
-                    {
-                        if (grid[i, j].piece.GetColor() == Color.Black) HelpGrid[i, j].Image = Properties.Resources.RookB;
-                        else HelpGrid[i, j].Image = Properties.Resources.RookW;
-                    }
-
-                    if (grid[i, j].piece != null && grid[i, j].piece.GetType() == Type.Bishop)
-                    {
-                        if (grid[i, j].piece.GetColor() == Color.Black) HelpGrid[i, j].Image = Properties.Resources.BishopB;
-                        else HelpGrid[i, j].Image = Properties.Resources.BishopW;
-                    }
-
-                    if (grid[i, j].piece != null && grid[i, j].piece.GetType() == Type.Queen)
-                    {
-                        if (grid[i, j].piece.GetColor() == Color.Black) HelpGrid[i, j].Image = Properties.Resources.QueenB;
-                        else HelpGrid[i, j].Image = Properties.Resources.QueenW;
-                    }
-
-                    if (grid[i, j].piece != null && grid[i, j].piece.GetType() == Type.King)
-                    {
-                        if (grid[i, j].piece.GetColor() == Color.Black) HelpGrid[i, j].Image = Properties.Resources.KingB;
-                        else HelpGrid[i, j].Image = Properties.Resources.KingW;
-                    }
-                }
-            }
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            help.Visible = false;
-        }
-
         private void help_Paint(object sender, PaintEventArgs e)
         {
 
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            Console.WriteLine("DEBUG");
-            var game = this.logic;
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -442,6 +372,11 @@ namespace Chess
             ai = null;
         }
 
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+
+        }
+
         private void button7_Click(object sender, EventArgs e)
         {
             var form = new ChooseDubbedPieceWhite();
@@ -450,7 +385,6 @@ namespace Chess
             // code will freeze here until that form is closed
 
             string chosen = form.chosen;
-            MessageBox.Show("you chose " + chosen);
         }
     }
 }

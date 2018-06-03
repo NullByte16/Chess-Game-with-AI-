@@ -36,6 +36,8 @@ namespace Chess
 
         public void InitGrid()
         {
+            CurrentTurn = Color.White;
+
             for (int i = 0; i < 8; i++)
                 for (int j = 0; j < 8; j++)
                     grid[i, j] = new Cell(i, j, null);
@@ -745,7 +747,7 @@ namespace Chess
         /// <summary>
         /// Receives the index [i, j]. Returns true if they exist in grid, else returns false.
         /// </summary>
-        private bool validIndexes(int i, int j)
+        public bool validIndexes(int i, int j)
         {
             if (i > -1 && i < 8 && j > -1 && j < 8)
                 return true;

@@ -10,6 +10,7 @@ namespace Chess
     {
         Color Color;
         Logic game;
+        Dictionary<Type, int> worths = new Dictionary<Type, int>();
 
         public Move ChooseMove()
         {
@@ -52,6 +53,12 @@ namespace Chess
         {
             this.Color = color;
             this.game = game;
+            this.worths[Type.Pawn] = 1;
+            this.worths[Type.Knight] = 3;
+            this.worths[Type.Bishop] = 3;
+            this.worths[Type.Rook] = 5;
+            this.worths[Type.Queen] = 9;
+            this.worths[Type.King] = 0;
         }
 
         private Piece eaten;
@@ -63,29 +70,59 @@ namespace Chess
         /// </summary>
         private int assess(Logic game, Color Color) // pretty much heuristic
         {
+            /*
+             * L = my pieces sum - his pices sum (on start: 39 - 39 = 0, but after we lost the queen -9)
+             * we multiply L by a large wieght (say 10,000) to make it matter very much. -> queenloss = -90,000
+             * 
+             * C = for each piece in the center: if its ours sum its value (1, 3, 5, 9) if its his piece, sum his minus value
+             * multiply this by, say, 1.
+             * if we are not in the center but hes too, then c = 0. if we both control it equally, then C = 0
+             * C becomes somethinh when there is a diference.
+             * 
+             * V = our king safety - his. this one's weight = 100 
+             */
+
+
             // todo return a number from -inf(we lose) to inf(we win)
             // optional aspects:
             // are we (or they) close to the centre
             // are any piece lost
             // is the king vulnerable
             int centerControl, piecesLost, kingVulnerability, pieceEaten;
-            const int a = 13, b = 8, c = 8, d = 13;
+            const int a = 1, b = 10000, c = 100, d = 0;
             //First we'll check whoIsToPlay's control over the center.
             //1: How many pieces from each side physically occupy the center?
             int countWhite = occupyCenter(game, Color.White);
             int countBlack = occupyCenter(game, Color.Black);
-
-            //2: How many pieces 'threaten' how many squares in the center?
-            threatenCenter(game, game.grid[3, 3], countWhite, countBlack);
-            threatenCenter(game, game.grid[3, 4], countWhite, countBlack);
-            threatenCenter(game, game.grid[4, 3], countWhite, countBlack);
-            threatenCenter(game, game.grid[4, 4], countWhite, countBlack);
 
             centerControl = this.Color == Color.White ? a * (countWhite - countBlack) : a * (countBlack - countWhite);
 
             //Next, we will compare our losses against the opponent's.
             countWhite = 0;
             countBlack = 0;
+            int WhiteVulnerability = 0, BlackVulnerability = 0; // num of opponent's pieces that can get into king palace
+
+            Cell whiteKing = game.FindKing(Color.White), blackKing = game.FindKing(Color.Black);
+
+            HashSet<Cell> surroundingWhiteKing = new HashSet<Cell>();
+            HashSet<Cell> surroundingBlackKing = new HashSet<Cell>();
+            for (int i = whiteKing.I - 2; i < whiteKing.I + 2; i++)
+            {
+                for(int j = whiteKing.J  -2; j < whiteKing.J + 2; j++)
+                {
+                    if (game.validIndexes(i, j))
+                        surroundingWhiteKing.Add(game.grid[i, j]);
+                }
+            }
+
+            for (int i = blackKing.I - 2; i < blackKing.I + 2; i++)
+            {
+                for (int j = blackKing.J - 2; j < blackKing.J + 2; j++)
+                {
+                    if (game.validIndexes(i, j))
+                        surroundingBlackKing.Add(game.grid[i, j]);
+                }
+            }
 
             for (int i = 0; i < 8; i++)
             {
@@ -94,45 +131,39 @@ namespace Chess
                     if (game.grid[i, j].piece != null)
                     {
                         if (game.grid[i, j].piece.GetColor() == Color.White)
-                            countWhite++;
+                        {
+                            countWhite += worths[game.grid[i, j].piece.GetType()];
+
+                            foreach (var move in game.GetValidMoves(game.grid[i, j]))
+                            {
+                                if (surroundingWhiteKing.Contains(move))
+                                {
+                                    WhiteVulnerability++;
+                                    break;
+                                }
+                            }
+
+                        }
+
                         else
-                            countBlack++;
+                        {
+                            countBlack += worths[game.grid[i, j].piece.GetType()];
+
+                            foreach (var move in game.GetValidMoves(game.grid[i, j]))
+                            {
+                                if (surroundingBlackKing.Contains(move))
+                                {
+                                    BlackVulnerability++;
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
             }
 
             piecesLost = this.Color == Color.White ? b * (countWhite - countBlack) : b * (countBlack - countWhite);
-
-
-            //Now, we will assess both kings' vulnerability.
-            //Can we be checkmated next turn?
-            int MyVul = 0, OpponentVul = 0;
-            for (int i = 0; i < 8; i++)
-            {
-                for (int j = 0; j < 8; j++)
-                {
-                    if (game.grid[i, j].piece != null)
-                    {
-                        if (game.grid[i, j].piece.GetColor() != this.Color)
-                        {
-                            if (DistanceFromKing(game, this.Color, game.grid[i, j]) < 4)
-                                MyVul += 2;
-                            if (DistanceFromKing(game, this.Color == Color.White ? Color.Black : Color.White, game.grid[i, j]) > 4)
-                                OpponentVul++;
-                        }
-
-                        else
-                        {
-                            if (DistanceFromKing(game, this.Color == Color.White ? Color.Black : Color.White, game.grid[i, j]) < 4)
-                                OpponentVul += 2;
-                            if (DistanceFromKing(game, this.Color, game.grid[i, j]) > 4)
-                                MyVul++;
-                        }
-                    }
-                }
-            }
-
-            kingVulnerability = OpponentVul - MyVul;
+            kingVulnerability = this.Color == Color.White ? c * (countWhite - countBlack) : b * (countBlack - countWhite);
 
             //Finally, we will assess the pieces we can eat, and our pieces, which can be eaten.
             int eatenValue, whatAteMeValue, threatValue;
@@ -157,7 +188,8 @@ namespace Chess
                 pieceEaten = whatAteMeValue - threatValue;
             }
 
-            Console.WriteLine(whatIMoved.piece.GetColor() + "  " + whatIMoved.I + " " + whatIMoved.J + " " + centerControl + " " + piecesLost + " " + kingVulnerability + " " + pieceEaten + "\t sum: " + (a * centerControl + b * piecesLost + c * kingVulnerability + d * pieceEaten));
+            //RECENTLY COMMENTED
+            //Console.WriteLine(whatIMoved.piece.GetColor() + "  " + whatIMoved.I + " " + whatIMoved.J + " " + centerControl + " " + piecesLost + " " + kingVulnerability + " " + pieceEaten + "\t sum: " + (a * centerControl + b * piecesLost + c * kingVulnerability + d * pieceEaten));
 
             return a * centerControl + b * piecesLost + c * kingVulnerability + d * pieceEaten;
         }
@@ -304,6 +336,8 @@ namespace Chess
                                 occupied_piece = target_cell.piece;
                                 target_cell.piece = movingPiece;
 
+                                // todo handle castling (move rook in addition), promotion always to queen implement PromoteToQueen
+
                                 if (occupied_piece != null)
                                     eaten = occupied_piece;
 
@@ -369,8 +403,8 @@ namespace Chess
 
             Logic Clone = new Logic();
             Clone.grid = Grid;
-            if (game.GetTurn() != Color.White)
-                game.NextTurn();
+            //if (game.GetTurn() != Color.White)
+            //    game.NextTurn();
 
             return Clone;
         }

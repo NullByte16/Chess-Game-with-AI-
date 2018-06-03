@@ -28,6 +28,8 @@ namespace Chess
             this.I = I;
             this.J = J;
             Papa = PapaForm;
+
+            this.BackColor = System.Drawing.Color.Transparent;
         }
 
         public void PlaceEaten(System.Drawing.Image img)
