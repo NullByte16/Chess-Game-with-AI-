@@ -15,13 +15,12 @@ namespace Chess
         public System.Drawing.Icon Icon;
 
 
-        public GraphicCell(int i, int j, MainForm papaForm, System.Drawing.Icon Icon)
+        public GraphicCell(int i, int j, MainForm papaForm)
         {
             this.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.Location = new System.Drawing.Point(j * 50 + 30, i * 50 + 25);
             this.Size = new System.Drawing.Size(50, 50);
             this.UseVisualStyleBackColor = true;
-            this.Icon = Icon;
 
             this.OriginalColor = i % 2 == j % 2 ? System.Drawing.Color.WhiteSmoke : System.Drawing.Color.Gray;
 

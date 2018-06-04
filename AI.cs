@@ -35,7 +35,7 @@ namespace Chess
             }
 
             Random rnd = new Random();
-            int ChosenOne = rnd.Next(0, BestSons.Count);
+            int ChosenOne = rnd.Next(0, BestSons.Count - 1);
             return BestSons[ChosenOne].whatGotUsHere;
 
             //All of this is pretty much unreachable code!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -61,9 +61,6 @@ namespace Chess
             this.worths[Type.King] = 0;
         }
 
-        private Piece eaten;
-        private Cell whatIMoved;
-
         /// <summary>
         /// Assess the current state of the game, in favor of a certain color (whoIsToPlay).
         /// Returns an integer between -100 and 100, ranking how good the state of the game is for specified color.
@@ -88,8 +85,8 @@ namespace Chess
             // are we (or they) close to the centre
             // are any piece lost
             // is the king vulnerable
-            int centerControl, piecesLost, kingVulnerability, pieceEaten;
-            const int a = 1, b = 10000, c = 100, d = 0;
+            int centerControl, piecesLost, kingVulnerability;
+            const int a = 1, b = 10000, c = 100;
             //First we'll check whoIsToPlay's control over the center.
             //1: How many pieces from each side physically occupy the center?
             int countWhite = occupyCenter(game, Color.White);
@@ -165,33 +162,7 @@ namespace Chess
             piecesLost = this.Color == Color.White ? b * (countWhite - countBlack) : b * (countBlack - countWhite);
             kingVulnerability = this.Color == Color.White ? c * (countWhite - countBlack) : b * (countBlack - countWhite);
 
-            //Finally, we will assess the pieces we can eat, and our pieces, which can be eaten.
-            int eatenValue, whatAteMeValue, threatValue;
-
-            if (eaten != null)
-            {
-                eatenValue = PieceValue(eaten.GetType());
-                whatAteMeValue = PieceValue(whatIMoved.piece.GetType());
-                threatValue = ThreatValue();
-
-                pieceEaten = eatenValue - whatAteMeValue - threatValue; //If value of eaten piece is more than what ate him,
-                                                                        //that is good for current player. If threat on current
-                                                                        //player's piece is positive, it is bad because the player is
-                                                                        //threatened by lesser piece.
-            }
-
-            else
-            {
-                whatAteMeValue = PieceValue(whatIMoved.piece.GetType());
-                threatValue = ThreatValue();
-
-                pieceEaten = whatAteMeValue - threatValue;
-            }
-
-            //RECENTLY COMMENTED
-            //Console.WriteLine(whatIMoved.piece.GetColor() + "  " + whatIMoved.I + " " + whatIMoved.J + " " + centerControl + " " + piecesLost + " " + kingVulnerability + " " + pieceEaten + "\t sum: " + (a * centerControl + b * piecesLost + c * kingVulnerability + d * pieceEaten));
-
-            return a * centerControl + b * piecesLost + c * kingVulnerability + d * pieceEaten;
+            return a * centerControl + b * piecesLost + c * kingVulnerability;
         }
 
         //Receives a game and a color. Returns how many pieces of that color physically occupy the center.
@@ -210,29 +181,6 @@ namespace Chess
 
         }
 
-        private void threatenCenter(Logic game, Cell cell, int countWhite, int countBlack)
-        {
-            for (int i = 0; i < 8; i++)
-            {
-                for (int j = 0; j < 8; j++)
-                {
-                    if (game.grid[i, j].piece != null)
-                    {
-                        if (game.grid[i, j].piece.GetColor() == Color.White && game.GetValidMoves(game.grid[i, j]).Contains(cell))
-                            countWhite++;
-                        else if (game.grid[i, j].piece.GetColor() == Color.Black && game.GetValidMoves(game.grid[i, j]).Contains(cell))
-                            countBlack++;
-                    }
-                }
-            }
-        }
-
-        private double DistanceFromKing(Logic game, Color Color, Cell BeingChecked)
-        {
-            Cell King = game.FindKing(Color);
-            return Math.Sqrt(Math.Pow(BeingChecked.I + King.I, 2) + Math.Pow(BeingChecked.J + King.J, 2));
-        }
-
         private bool hasValidMoves(Logic state, Color WhoIsToPlay)
         {
             for (int i = 0; i < 8; i++)
@@ -248,54 +196,6 @@ namespace Chess
 
             return false;
         }
-
-        public int PieceValue(Type type)
-        {
-            int queen = 9, rook = 5, knight = 3, bishop = 3, pawn = 1;
-
-            switch (type)
-            {
-                case Type.Queen:
-                    return queen;
-
-                case Type.Rook:
-                    return rook;
-
-                case Type.Knight:
-                    return knight;
-
-                case Type.Bishop:
-                    return bishop;
-
-                case Type.Pawn:
-                    return pawn;
-            }
-
-            return 0; //Code should never reach here.
-        }
-
-        /// <summary>
-        /// 
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public int ThreatValue()
-        {
-            int maxThreat = -9;
-            for (int i = 0; i < 8; i++)
-            {
-                for (int j = 0; j < 8; j++)
-                {
-                    if (game.grid[i, j].piece != null && game.GetValidMoves(game.grid[i, j]).Contains(whatIMoved) && PieceValue(game.grid[i, j].piece.GetType()) - PieceValue(whatIMoved.piece.GetType()) > maxThreat)
-                        maxThreat = PieceValue(game.grid[i, j].piece.GetType()) - PieceValue(whatIMoved.piece.GetType());
-
-
-                }
-            }
-
-            return maxThreat;
-        }
-
 
         int idFactory = 0;
 
@@ -337,14 +237,6 @@ namespace Chess
                                 target_cell.piece = movingPiece;
 
                                 // todo handle castling (move rook in addition), promotion always to queen implement PromoteToQueen
-
-                                if (occupied_piece != null)
-                                    eaten = occupied_piece;
-
-                                else
-                                    eaten = null;
-
-                                whatIMoved = target_cell;
 
                                 var son = buildTree(levelsLeftToBuild - 1, WhoIsToPlay == Color.Black ? Color.White : Color.Black, state);
                                 son.whatGotUsHere = new Move(state.grid[i, j], target_cell);

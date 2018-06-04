@@ -59,9 +59,6 @@
     <Compile Include="ChooseDubbedPieceBlack.Designer.cs">
       <DependentUpon>ChooseDubbedPieceBlack.cs</DependentUpon>
     </Compile>
-    <Compile Include="HelpGraphicCell.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="EatenPieceHolder.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -198,6 +195,20 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\74183.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\di-evantile_charming-life.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Icon99.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Front.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Epic-battle-music-grzegorz-majcherczyk-heroica.wav" />
+    <Content Include="Resources\frontIcon.ico" />
+    <None Include="Resources\Osullivanluke-Orb-Os-X-Chess.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

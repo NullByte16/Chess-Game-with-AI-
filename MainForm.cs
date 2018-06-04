@@ -17,7 +17,10 @@ namespace Chess
         private EatenPieceHolder[,] EatenWhite = new EatenPieceHolder[4, 4];
         private EatenPieceHolder nextBlack;
         private EatenPieceHolder nextWhite;
-        private Image KingW = Properties.Resources.KingW, KingB = Properties.Resources.KingB;
+        private System.Media.SoundPlayer bgGame = new System.Media.SoundPlayer(Properties.Resources.di_evantile_charming_life); //AUDIO
+        private System.Media.SoundPlayer OpeningWar = new System.Media.SoundPlayer(Properties.Resources.Epic_battle_music_grzegorz_majcherczyk_heroica);
+        private Stack<Cell[,]> undoStackLogic = new Stack<Cell[,]>();
+        private Stack<GraphicCell[,]> undoStackGraphic = new Stack<GraphicCell[,]>();
         private Logic logic;
         private AI ai = null; // null indicates its a human playing
 
@@ -25,6 +28,9 @@ namespace Chess
         {
             InitializeComponent();
             buttonRestart.Visible = false;
+            undoButton.Visible = false;
+            OpeningWar.PlayLooping();
+
         }
 
         private void init()
@@ -33,12 +39,13 @@ namespace Chess
             InitGrid();
             InitEaten();
             buttonRestart.Visible = true;
+            undoButton.Visible = true;
         }
 
         private void InitGrid()
         {
             var images = new Dictionary<Color, Dictionary<Type, Bitmap>>();
-            #region ugly_code
+            #region filling up images
             var whites = new Dictionary<Type, Bitmap>();
             var blacks = new Dictionary<Type, Bitmap>();
             images[Color.White] = whites;
@@ -63,7 +70,7 @@ namespace Chess
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    grid[i, j] = new GraphicCell(i, j, this, null);
+                    grid[i, j] = new GraphicCell(i, j, this);
 
                     Piece piece = logic.getCellContent(i, j);
                     if (piece != null)
@@ -74,14 +81,49 @@ namespace Chess
 
         private void RessurrectGrid()
         {
-            for (int i = 0; i < 8; i++)
+            lastChosen = null;
+            
+            while (undoStackGraphic.Count > 0 && undoStackLogic.Count > 0)
+            {
+                GraphicCell[,] gc = undoStackGraphic.Pop();
+                Cell[,] c = undoStackLogic.Pop();
+
+                for (int i = 0; i < 8; i++)
+                    for (int j = 0; j < 8; j++)
+                    {
+                        this.grid[i, j].Image = gc[i, j].Image;
+                        this.grid[i, j].BackColor = this.grid[i, j].OriginalColor;
+                        logic.grid[i, j].piece = c[i, j].piece;
+
+                    }
+
+                if (this.ai == null)
+                    logic.NextTurn();
+            }
+
+            /*for (int i = 0; i < 8; i++)
+            {
                 for (int j = 0; j < 8; j++)
                 {
                     this.Controls.Remove(grid[i, j]);
-                    grid[i, j] = null;
                 }
-            logic.InitGrid();
-            InitGrid();
+            }*/
+
+
+            for (int i = 0; i < 4; i++)
+                {
+                    for (int j = 0; j < 4; j++)
+                    {
+                        this.Controls.Remove(EatenWhite[i, j]);
+                        this.Controls.Remove(EatenBlack[i, j]);
+                        EatenWhite[i, j] = null;
+                        EatenBlack[i, j] = null;
+                    }
+                }
+
+            /*logic.InitGrid();
+            this.InitGrid();*/
+            this.InitEaten();
         }
 
         public void InitEaten()
@@ -141,7 +183,7 @@ namespace Chess
 
                 if (!ValidMoves.Contains(this.logic.GetCell(i, j)))
                 {
-                    
+
 
                     if (logic.getCellContent(i, j) != null && logic.getCellContent(i, j).GetColor() == logic.GetTurn())
                     {
@@ -156,12 +198,17 @@ namespace Chess
 
                 showEaten(i, j);
 
+                //Save in undo stacks.
+                undoStackLogic.Push(logic.copyLogicGrid());
+                undoStackGraphic.Push(copyGraphicGrid());
+
                 graphicallyMovePiece(lastChosen, grid[i, j]); //BREAKPOINT
 
                 if (logic.MakeMove(i, j, lastChosen.I, lastChosen.J)) // means if checkmate 
                 {
                     this.InitGrid(); // todo if checkmate, leave the board!
                     this.InitEaten();
+                    EndGame();
                 }
 
                 lastChosen = null;
@@ -173,6 +220,18 @@ namespace Chess
                     letAIplay();
                 }
             }
+        }
+
+        private GraphicCell[,] copyGraphicGrid() //NEWLY ADDED
+        {
+            GraphicCell[,] gc = new GraphicCell[8, 8];
+            for (int i = 0; i < 8; i++)
+                for (int j = 0; j < 8; j++)
+                {
+                    gc[i, j] = new GraphicCell(i, j, this);
+                    gc[i, j].Image = grid[i, j].Image;
+                }
+            return gc;
         }
 
         private void showEaten(int i, int j) //RECENT CODE
@@ -235,13 +294,14 @@ namespace Chess
                     grid[target.I, 5].Image = temp;
                 }
             }
+            
 
             //En Passant
             if (logic.getCellContent(i, j).GetType() == Type.Pawn)
             {
-                if (logic.WhitePerformingEnPassant(target.I, target.J, source.J))
+                if (logic.getCellContent(i, j).GetColor() == Color.White && logic.WhitePerformingEnPassant(target.I, target.J, source.J))
                     grid[target.I + 1, target.J].Image = null;
-                else if (logic.BlackPerformingEnPassant(target.I, target.J, source.J))
+                else if (logic.getCellContent(i, j).GetColor() == Color.Black && logic.BlackPerformingEnPassant(target.I, target.J, source.J))
                     grid[target.I - 1, target.J].Image = null;
             }
 
@@ -315,7 +375,6 @@ namespace Chess
             }
             // code will freeze here until that form is closed
 
-            MessageBox.Show("you chose " + chosen);
             return chosen;
         }
 
@@ -345,7 +404,8 @@ namespace Chess
 
         public void EndGame()
         {
-
+            bgGame.Stop(); //AUDIO
+            System.Windows.Forms.MessageBox.Show("Checkmate! " + logic.GetTurn() + " wins the game!");
         }
 
         private void help_Paint(object sender, PaintEventArgs e)
@@ -360,21 +420,45 @@ namespace Chess
 
         private void button5_Click(object sender, EventArgs e)
         {
-            panel1.Visible = false;
+            OpeningPanel.Visible = false;
             init();
+            OpeningWar.Stop();
+            bgGame.PlayLooping();
             ai = new AI(Color.Black, logic);
         }
 
         private void button6_Click(object sender, EventArgs e)
         {
-            panel1.Visible = false;
+            OpeningPanel.Visible = false;
             init();
+            OpeningWar.Stop();
+            bgGame.PlayLooping();
             ai = null;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
 
+        }
+
+        private void undoButton_Click(object sender, EventArgs e)
+        {
+            if (undoStackGraphic.Count > 0 && undoStackLogic.Count > 0)
+            {
+                GraphicCell[,] gc = undoStackGraphic.Pop();
+                Cell[,] c = undoStackLogic.Pop();
+
+                for (int i = 0; i < 8; i++)
+                    for (int j = 0; j < 8; j++)
+                    {
+                        this.grid[i, j].Image = gc[i, j].Image;
+                        logic.grid[i, j].piece = c[i, j].piece;
+
+                    }
+
+                if (this.ai == null)
+                    logic.NextTurn();
+            }
         }
 
         private void button7_Click(object sender, EventArgs e)

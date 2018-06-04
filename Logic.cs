@@ -123,7 +123,7 @@ namespace Chess
 
             else if (grid[fromI, fromJ].piece.GetType() == Type.Rook)
             {
-                if (grid[fromI, fromJ].piece.GetColor() == Color.White && castlingHasMoved[2])
+                if (grid[fromI, fromJ].piece.GetColor() == Color.White && castlingHasMoved[2]) //HERE WAS STUPIDITY
                     castlingHasMoved[3] = true;
                 else if (grid[fromI, fromJ].piece.GetColor() == Color.White && !castlingHasMoved[2])
                     castlingHasMoved[2] = true;
@@ -164,7 +164,7 @@ namespace Chess
 
             if (grid[fromI, fromJ].piece.GetType() == Type.King && Math.Abs(toJ - fromJ) == 2)
             {
-                Castling(toI, toJ, fromI);
+                Castling(toI, toJ, fromJ);
                 NextTurn();
             }
 
@@ -177,7 +177,6 @@ namespace Chess
                 if (InCheckMate(GetTurn()))
                 {
                     NextTurn();
-                    System.Windows.Forms.MessageBox.Show("Checkmate!!! " + GetTurn() + " is the winner!");
                     InitGrid();
                     return true;
                 }
@@ -197,24 +196,24 @@ namespace Chess
             {
                 if (toJ > fromJ)
                 {
-                    MakeMove(7, 3, 7, 0);
+                    MakeMove(7, 5, 7, 7);
                 }
 
                 else
                 {
-                    MakeMove(7, 5, 7, 7);
+                    MakeMove(7, 3, 7, 0);
                 }
             }
             else
             {
                 if (toJ > fromJ)
                 {
-                    MakeMove(0, 3, 0, 0);
+                    MakeMove(0, 5, 0, 7);
                 }
 
                 else
                 {
-                    MakeMove(0, 5, 0, 7);
+                    MakeMove(0, 3, 0, 0);
                 }
             }
         }
@@ -241,42 +240,6 @@ namespace Chess
         public LinkedList<Cell> GetValidMoves(Cell cell)
         {
             return GetValidMoves(cell.I, cell.J);
-        }
-
-        public override string ToString()
-        {
-            String st = "";
-            for (int i = 0; i < 8; i++)
-            {
-                for (int j = 0; j < 8; j++)
-                {
-                    string piece = "X";
-                    if (grid[i, j].piece == null)
-                        piece = " ";
-                    else if (grid[i, j].piece.GetType() == Type.Bishop)
-                        piece = "b";
-
-                    else if (grid[i, j].piece.GetType() == Type.King)
-                        piece = "k";
-                    else if (grid[i, j].piece.GetType() == Type.Knight)
-                        piece = "n";
-                    else if (grid[i, j].piece.GetType() == Type.Pawn)
-                        piece = "p";
-                    else if (grid[i, j].piece.GetType() == Type.Queen)
-                        piece = "q";
-                    else if (grid[i, j].piece.GetType() == Type.Rook)
-                        piece = "r";
-
-                    if (grid[i, j].piece != null)
-                    {
-                        if (grid[i, j].piece.GetColor() == Color.Black)
-                            piece = piece.ToUpper();
-                    }
-                    st += piece;
-                }
-                st += "\n";
-            }
-            return st;
         }
 
         /// <summary>
@@ -362,7 +325,7 @@ namespace Chess
                 if (grid[cell.I + 1, cell.J].piece == null)
                     result.AddLast(grid[cell.I + 1, cell.J]);
 
-                if (cell.I == 5)//RECENT CODE
+                if (cell.I == 4)//RECENT CODE
                 {
                     if (validIndexes(cell.I, cell.J - 1) && EnPassantLeft(cell))
                         result.AddLast(grid[cell.I + 1, cell.J - 1]);
@@ -743,7 +706,6 @@ namespace Chess
             }
         }
 
-
         /// <summary>
         /// Receives the index [i, j]. Returns true if they exist in grid, else returns false.
         /// </summary>
@@ -831,7 +793,7 @@ namespace Chess
             //     check if check
             //     get the king back
             LinkedList<Cell> ValidMovesKing = GetValidMoves(FindKing(color));
-            if (ValidMovesKing != null)
+            if (ValidMovesKing.Count > 0)
             {
                 foreach (Cell cell in grid)
                 {
@@ -846,9 +808,15 @@ namespace Chess
             return true;
         }
 
-        public Cell[,] HelpForm()
+        public Cell[,] copyLogicGrid()
         {
-            return this.grid;
+            Cell[,] gc = new Cell[8, 8];
+            for (int i = 0; i < 8; i++)
+                for (int j = 0; j < 8; j++)
+                {
+                    gc[i, j] = new Cell(i, j, grid[i, j].piece);
+                }
+            return gc;
         }
     }
 

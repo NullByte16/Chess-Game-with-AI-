@@ -29,24 +29,25 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            this.panel1 = new System.Windows.Forms.Panel();
+            this.OpeningPanel = new System.Windows.Forms.Panel();
             this.label1 = new System.Windows.Forms.Label();
             this.button6 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
             this.buttonRestart = new System.Windows.Forms.Button();
-            this.panel1.SuspendLayout();
+            this.undoButton = new System.Windows.Forms.Button();
+            this.OpeningPanel.SuspendLayout();
             this.SuspendLayout();
             // 
-            // panel1
+            // OpeningPanel
             // 
-            this.panel1.BackColor = System.Drawing.Color.Transparent;
-            this.panel1.Controls.Add(this.label1);
-            this.panel1.Controls.Add(this.button6);
-            this.panel1.Controls.Add(this.button5);
-            this.panel1.Location = new System.Drawing.Point(150, 127);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(358, 266);
-            this.panel1.TabIndex = 4;
+            this.OpeningPanel.BackColor = System.Drawing.Color.Transparent;
+            this.OpeningPanel.Controls.Add(this.label1);
+            this.OpeningPanel.Controls.Add(this.button6);
+            this.OpeningPanel.Controls.Add(this.button5);
+            this.OpeningPanel.Location = new System.Drawing.Point(150, 127);
+            this.OpeningPanel.Name = "OpeningPanel";
+            this.OpeningPanel.Size = new System.Drawing.Size(358, 266);
+            this.OpeningPanel.TabIndex = 4;
             // 
             // label1
             // 
@@ -65,7 +66,7 @@
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(122, 39);
             this.button6.TabIndex = 1;
-            this.button6.Text = "human";
+            this.button6.Text = "Human";
             this.button6.UseVisualStyleBackColor = true;
             this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
@@ -75,7 +76,7 @@
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(122, 39);
             this.button5.TabIndex = 0;
-            this.button5.Text = "ai";
+            this.button5.Text = "AI";
             this.button5.UseVisualStyleBackColor = true;
             this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
@@ -89,6 +90,17 @@
             this.buttonRestart.UseVisualStyleBackColor = true;
             this.buttonRestart.Click += new System.EventHandler(this.button4_Click);
             // 
+            // undoButton
+            // 
+            this.undoButton.Location = new System.Drawing.Point(63, 463);
+            this.undoButton.Name = "undoButton";
+            this.undoButton.Size = new System.Drawing.Size(87, 29);
+            this.undoButton.TabIndex = 5;
+            this.undoButton.Text = "Undo";
+            this.undoButton.UseVisualStyleBackColor = true;
+            this.undoButton.Visible = false;
+            this.undoButton.Click += new System.EventHandler(this.undoButton_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -97,24 +109,27 @@
             this.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("$this.BackgroundImage")));
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.ClientSize = new System.Drawing.Size(653, 525);
-            this.Controls.Add(this.panel1);
+            this.Controls.Add(this.undoButton);
+            this.Controls.Add(this.OpeningPanel);
             this.Controls.Add(this.buttonRestart);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "MainForm";
-            this.Text = "Form1";
+            this.Text = "Chess";
             this.Load += new System.EventHandler(this.MainForm_Load);
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
+            this.OpeningPanel.ResumeLayout(false);
+            this.OpeningPanel.PerformLayout();
             this.ResumeLayout(false);
 
         }
 
         #endregion
-        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel OpeningPanel;
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.Button button6;
         private System.Windows.Forms.Button buttonRestart;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button undoButton;
     }
 }
